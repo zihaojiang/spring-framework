@@ -178,7 +178,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 			enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE); // 设置命名策略。ps：感兴趣可以点击去看下。
 			enhancer.setStrategy(new ClassLoaderAwareUndeclaredThrowableStrategy(classLoader));
 
-			// 设置拦截器
+			// 重点 设置拦截器 其中包括aop拦截器
 			Callback[] callbacks = getCallbacks(rootClass);
 			Class<?>[] types = new Class<?>[callbacks.length];
 			for (int x = 0; x < types.length; x++) {
@@ -307,6 +307,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 		Callback targetDispatcher = (isStatic ?
 				new StaticDispatcher(this.advised.getTargetSource().getTarget()) : new SerializableNoOp());
 
+		//Callback是Cglib所有自定义逻辑(增强)的共同接口
 		Callback[] mainCallbacks = new Callback[] {
 				aopInterceptor,  // for normal advice // 【重要】将拦截器，添加到 Callback 中
 				targetInterceptor,  // invoke target without considering advice, if optimized 目标拦截器

@@ -434,7 +434,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// which cannot be stored in the shared merged bean definition.
         // 确保此时的 bean 已经被解析了
         // 如果获取的class 属性不为null，则克隆该 BeanDefinition
-        // 主要是因为该动态解析的 class 无法保存到到共享的 BeanDefinition
+        // 主要是因为该动态解析的  class 无法保存到到共享的 BeanDefinition
 		Class<?> resolvedClass = resolveBeanClass(mbd, beanName);
 		if (resolvedClass != null && !mbd.hasBeanClass() && mbd.getBeanClassName() != null) {
 			mbdToUse = new RootBeanDefinition(mbd);
@@ -1072,6 +1072,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	@Nullable
 	protected Object applyBeanPostProcessorsBeforeInstantiation(Class<?> beanClass, String beanName) {
+		//aop AspectJAwareAdvisorAutoProxyCreator 实现了BeanPostProcessor 因此会在这里织入
 		for (BeanPostProcessor bp : getBeanPostProcessors()) {
 			if (bp instanceof InstantiationAwareBeanPostProcessor) {
 				InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;

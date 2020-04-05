@@ -198,6 +198,7 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 		Assert.notNull(paths, "Path array must not be null");
 		Assert.notNull(clazz, "Class argument must not be null");
 		// 创建 Resource 数组
+		// 根据提供的路径，处理成配置文件数组(以分号、逗号、空格、tab、换行符分割)
 		this.configResources = new Resource[paths.length];
 		for (int i = 0; i < paths.length; i++) {
 			this.configResources[i] = new ClassPathResource(paths[i], clazz);
