@@ -61,18 +61,16 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
      * Cache of singleton objects: bean name to bean instance.
-     *
+     * 一级缓存：维护着所有创建完成的Bean
      * 存放的是单例 bean 的映射。
-     *
      * 对应关系为 bean name --> bean instance
      */
 	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
 
 	/**
      * Cache of singleton factories: bean name to ObjectFactory.
-     *
+     * 三级缓存：维护创建中Bean的ObjectFactory(解决循环依赖的关键)
      * 存放的是 ObjectFactory，可以理解为创建单例 bean 的 factory 。
-     *
      * 对应关系是 bean name --> ObjectFactory
      **/
 	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
@@ -80,14 +78,19 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	/**
      * Cache of early singleton objects: bean name to bean instance.
      *
+	 * 二级缓存：维护早期暴露的Bean(只进行了实例化，并未进行属性注入)
      * 存放的是早期的 bean，对应关系也是 bean name --> bean instance。
-     *
-     * 它与 {@link #singletonFactories} 区别在于 earlySingletonObjects 中存放的 bean 不一定是完整。
      *
      * 从 {@link #getSingleton(String)} 方法中，我们可以了解，bean 在创建过程中就已经加入到 earlySingletonObjects 中了。
      * 所以当在 bean 的创建过程中，就可以通过 getBean() 方法获取。
      *
      * 这个 Map 也是【循环依赖】的关键所在。
+	 *
+	 * 既然有了三级缓存了，为什么还要设计二级缓存呢？可能很多人觉得二级缓存是个鸡肋，可有可无，
+	 * \其实这是Spring大量使用缓存提高性能的一点体现。每次都通过工厂去拿，需要遍历所有的后置处理器、判断是否创建代理对象，
+	 * 而判断是否创建代理对象本身也是一个复杂耗时的过程。设计二级缓存避免再次调用调用getEarlyBeanReference方法，
+	 * 提高bean加载流程。只能说，Spring是个海洋。
+	 *
      */
 	private final Map<String, Object> earlySingletonObjects = new HashMap<>(16);
 
@@ -202,18 +205,19 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
-        // 从单例缓冲中加载 bean
+        // 从单例缓冲中加载 bean 一级缓存
 	    Object singletonObject = this.singletonObjects.get(beanName);
-        // 缓存中的 bean 为空，且当前 bean 正在创建
+        // 如果一级缓存没有，并且bean在创建中，会从二级缓存中获取
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
             // 加锁
             synchronized (this.singletonObjects) {
                 // 从 earlySingletonObjects 获取
                 singletonObject = this.earlySingletonObjects.get(beanName);
-                // earlySingletonObjects 中没有，且允许提前创建
+				// 二级缓存不存在，并且允许从singletonFactories中通过getObject拿到对象
                 if (singletonObject == null && allowEarlyReference) {
                     // 从 singletonFactories 中获取对应的 ObjectFactory
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
+					// 三级缓存不为空，将三级缓存提升至二级缓存，并清除三级缓存 这就是提前曝光
 					if (singletonFactory != null) {
 					    // 获得 bean
 						singletonObject = singletonFactory.getObject();

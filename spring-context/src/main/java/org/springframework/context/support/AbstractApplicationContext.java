@@ -503,6 +503,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			// Prepare the bean factory for use in this context.
             // 对 BeanFactory 进行各种功能填充。
 			// 设置 BeanFactory 的类加载器，添加几个 BeanPostProcessor，手动注册几个特殊的 bean
+			// 重点，很多spring自己的功能都是在这里注入
             // TODO 包括对 @Autowired 和 @Qualifier 注解的属性注入
 			prepareBeanFactory(beanFactory);
 
